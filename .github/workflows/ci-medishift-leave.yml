@@ -1,139 +1,3 @@
-# name: CI/CD - medishift-leave-service
-
-# on:
-#   push:
-#     branches:
-#       - main
-#       - develop
-#   pull_request:
-#     branches:
-#       - main
-#       - develop
-
-# jobs:
-#   sonarqube:
-#     name: "Stage 1 - SonarQube SAST"
-#     uses: MediShift-devops-project/medishift-templates/.github/workflows/template-sonarqube.yml@main
-#     with:
-#       service_name: medishift-leave-service
-#       working_directory: .
-#     secrets:
-#       SONARQUBE_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
-#       SONARQUBE_URL: ${{ secrets.SONARQUBE_URL }}
-#       SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-#       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-#       ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
-
-#   build-snyk:
-#     name: "Stage 2 - Build + Snyk SCA"
-#     needs: sonarqube
-#     uses: MediShift-devops-project/medishift-templates/.github/workflows/template-build-snyk.yml@main
-#     with:
-#       service_name: medishift-leave-service
-#       working_directory: .
-#       node_version: '18'
-#     secrets:
-#       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-#       SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-#       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-#       ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
-
-#   docker:
-#     name: "Stage 3 - Docker Build + Trivy + Push"
-#     needs: build-snyk
-#     if: github.event_name == 'push'
-#     uses: MediShift-devops-project/medishift-templates/.github/workflows/template-docker.yml@main
-#     with:
-#       service_name: medishift-leave-service
-#       image_name: medishift-leave
-#       working_directory: .
-#     secrets:
-#       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-#       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-#       SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-#       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-#       ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
-
-#   approval:
-#     name: "Stage 4 - Approval Gate"
-#     needs: docker
-#     if: github.event_name == 'push'
-#     uses: MediShift-devops-project/medishift-templates/.github/workflows/template-approval-gate.yml@main
-#     with:
-#       service_name: medishift-leave-service
-#       image_version: ${{ needs.docker.outputs.image_version }}
-#       target_environment: ${{ github.ref_name == 'main' && 'production' || 'development' }}
-#       target_namespace: ${{ github.ref_name == 'main' && 'medishift-prod' || 'medishift-dev' }}
-#     secrets:
-#       SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-#       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-#       ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
-
-#   deploy:
-#     name: "Stage 5 - Update Helm Manifests (CD)"
-#     needs: [docker, approval]
-#     if: github.event_name == 'push'
-#     uses: MediShift-devops-project/medishift-templates/.github/workflows/template-cd.yml@main
-#     with:
-#       service_name: medishift-leave-service
-#       service_key: leave
-#       image_version: ${{ needs.docker.outputs.image_version }}
-#       branch: ${{ github.ref_name }}
-#     secrets:
-#       MANIFEST_REPO_PAT: ${{ secrets.MANIFEST_REPO_PAT }}
-#       SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-#       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-#       ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
-
-#   notify-success:
-#     name: "Stage 6 - Success Notification"
-#     needs: [sonarqube, build-snyk, docker, approval, deploy]
-#     if: success() && github.event_name == 'push'
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Send Success Email
-#         uses: dawidd6/action-send-mail@v3
-#         with:
-#           server_address: smtp.gmail.com
-#           server_port: 465
-#           secure: true
-#           username: ${{ secrets.SMTP_USERNAME }}
-#           password: ${{ secrets.SMTP_PASSWORD }}
-#           subject: "✅ SUCCESS - medishift-leave-service → ${{ github.ref_name == 'main' && 'PRODUCTION' || 'DEVELOPMENT' }}"
-#           to: ${{ secrets.ALERT_EMAIL }}
-#           from: MediShift DevOps <${{ secrets.SMTP_USERNAME }}>
-#           body: |
-#             ✅ FULL CI/CD PIPELINE SUCCESSFUL
-#             ══════════════════════════════════════════
-            
-#             Service:      medishift-leave-service
-#             Version:      ${{ needs.docker.outputs.image_version }}
-#             Environment:  ${{ github.ref_name == 'main' && 'PRODUCTION' || 'DEVELOPMENT' }}
-#             Namespace:    ${{ github.ref_name == 'main' && 'medishift-prod' || 'medishift-dev' }}
-#             Branch:       ${{ github.ref_name }}
-#             Triggered by: ${{ github.actor }}
-#             Commit:       ${{ github.sha }}
-            
-#             ══════════════════════════════════════════
-#             PIPELINE STAGES:
-#             ✅ Stage 1 - SonarQube SAST Scan
-#             ✅ Stage 2 - NPM Build + Snyk SCA
-#             ✅ Stage 3 - Docker Build + Trivy Scan
-#             ✅ Stage 4 - Approval Gate Passed
-#             ✅ Stage 5 - Helm Manifest Updated
-#             ✅ Stage 6 - Notification Sent
-#             ══════════════════════════════════════════
-            
-#             IMAGES PUSHED TO DOCKERHUB:
-#             📦 revanth654/medishift-leave:${{ needs.docker.outputs.image_version }}
-#             📦 revanth654/medishift-leave:${{ needs.docker.outputs.image_full_tag }}
-#             📦 revanth654/medishift-leave:latest
-            
-#             ArgoCD will auto-sync within 3 minutes.
-            
-#             ══════════════════════════════════════════
-#             -- MediShift DevOps Pipeline
-
 name: CI/CD - medishift-leave-service
 
 on:
@@ -245,11 +109,11 @@ jobs:
           secure: true
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
-          subject: "✅ SUCCESS - medishift-leave-service → ${{ github.ref_name == 'main' && 'PRODUCTION' || 'DEVELOPMENT' }}"
+          subject: "SUCCESS - medishift-leave-service → ${{ github.ref_name == 'main' && 'PRODUCTION' || 'DEVELOPMENT' }}"
           to: ${{ secrets.ALERT_EMAIL }}
           from: MediShift DevOps <${{ secrets.SMTP_USERNAME }}>
           body: |
-            ✅ FULL CI/CD PIPELINE SUCCESSFUL
+            FULL CI/CD PIPELINE SUCCESSFUL
             ══════════════════════════════════════════
 
             Service:      medishift-leave-service
@@ -262,18 +126,18 @@ jobs:
 
             ══════════════════════════════════════════
             PIPELINE STAGES:
-            ✅ Stage 1 - SonarQube SAST Scan
-            ✅ Stage 2 - NPM Build + Snyk SCA
-            ✅ Stage 3 - Docker Build + Trivy Scan
-            ✅ Stage 4 - Approval Gate Passed
-            ✅ Stage 5 - Helm Manifest Updated + Secrets Injected
-            ✅ Stage 6 - Notification Sent
+            Stage 1 - SonarQube SAST Scan
+            Stage 2 - NPM Build + Snyk SCA
+            Stage 3 - Docker Build + Trivy Scan
+            Stage 4 - Approval Gate Passed
+            Stage 5 - Helm Manifest Updated + Secrets Injected
+            Stage 6 - Notification Sent
             ══════════════════════════════════════════
 
             IMAGES PUSHED TO DOCKERHUB:
-            📦 revanth654/medishift-leave:${{ needs.docker.outputs.image_version }}
-            📦 revanth654/medishift-leave:${{ needs.docker.outputs.image_full_tag }}
-            📦 revanth654/medishift-leave:latest
+            revanth654/medishift-leave:${{ needs.docker.outputs.image_version }}
+            revanth654/medishift-leave:${{ needs.docker.outputs.image_full_tag }}
+            revanth654/medishift-leave:latest
 
             ArgoCD will auto-sync within 3 minutes.
 
