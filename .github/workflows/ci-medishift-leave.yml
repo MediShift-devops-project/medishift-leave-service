@@ -84,6 +84,16 @@ jobs:
       SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
       ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+      DEV_DB_URL: ${{ secrets.DEV_DB_URL }}
+      DEV_JWT_SECRET: ${{ secrets.DEV_JWT_SECRET }}
+      DEV_DB_USER: ${{ secrets.DEV_DB_USER }}
+      DEV_DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
+      DEV_DB_NAME: ${{ secrets.DEV_DB_NAME }}
+      PROD_DB_URL: ${{ secrets.PROD_DB_URL }}
+      PROD_JWT_SECRET: ${{ secrets.PROD_JWT_SECRET }}
+      PROD_DB_USER: ${{ secrets.PROD_DB_USER }}
+      PROD_DB_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
+      PROD_DB_NAME: ${{ secrets.PROD_DB_NAME }}
 
   notify-success:
     name: "Stage 6 - Success Notification"
@@ -99,13 +109,13 @@ jobs:
           secure: true
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
-          subject: "✅ SUCCESS - medishift-leave-service → ${{ github.ref_name == 'main' && 'PRODUCTION' || 'DEVELOPMENT' }}"
+          subject: "SUCCESS - medishift-leave-service → ${{ github.ref_name == 'main' && 'PRODUCTION' || 'DEVELOPMENT' }}"
           to: ${{ secrets.ALERT_EMAIL }}
           from: MediShift DevOps <${{ secrets.SMTP_USERNAME }}>
           body: |
-            ✅ FULL CI/CD PIPELINE SUCCESSFUL
+            FULL CI/CD PIPELINE SUCCESSFUL
             ══════════════════════════════════════════
-            
+
             Service:      medishift-leave-service
             Version:      ${{ needs.docker.outputs.image_version }}
             Environment:  ${{ github.ref_name == 'main' && 'PRODUCTION' || 'DEVELOPMENT' }}
@@ -113,23 +123,23 @@ jobs:
             Branch:       ${{ github.ref_name }}
             Triggered by: ${{ github.actor }}
             Commit:       ${{ github.sha }}
-            
+
             ══════════════════════════════════════════
             PIPELINE STAGES:
-            ✅ Stage 1 - SonarQube SAST Scan
-            ✅ Stage 2 - NPM Build + Snyk SCA
-            ✅ Stage 3 - Docker Build + Trivy Scan
-            ✅ Stage 4 - Approval Gate Passed
-            ✅ Stage 5 - Helm Manifest Updated
-            ✅ Stage 6 - Notification Sent
+            Stage 1 - SonarQube SAST Scan
+            Stage 2 - NPM Build + Snyk SCA
+            Stage 3 - Docker Build + Trivy Scan
+            Stage 4 - Approval Gate Passed
+            Stage 5 - Helm Manifest Updated + Secrets Injected
+            Stage 6 - Notification Sent
             ══════════════════════════════════════════
-            
+
             IMAGES PUSHED TO DOCKERHUB:
-            📦 revanth654/medishift-leave:${{ needs.docker.outputs.image_version }}
-            📦 revanth654/medishift-leave:${{ needs.docker.outputs.image_full_tag }}
-            📦 revanth654/medishift-leave:latest
-            
+            revanth654/medishift-leave:${{ needs.docker.outputs.image_version }}
+            revanth654/medishift-leave:${{ needs.docker.outputs.image_full_tag }}
+            revanth654/medishift-leave:latest
+
             ArgoCD will auto-sync within 3 minutes.
-            
+
             ══════════════════════════════════════════
             -- MediShift DevOps Pipeline
