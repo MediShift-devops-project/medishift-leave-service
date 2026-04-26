@@ -61,29 +61,20 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy dependency files
 COPY package*.json ./
-
-# Install only production dependencies
 RUN npm ci --omit=dev && npm cache clean --force
 
-# Copy source code
 COPY . .
 
 # ---------- Stage 2: Secure Runtime ----------
-FROM cgr.dev/chainguard/node:20
+FROM cgr.dev/chainguard/node:latest
 
 WORKDIR /app
 
-# Copy only required files from builder
 COPY --from=builder /app ./
 
-# Set environment
 ENV NODE_ENV=production
-
-# Chainguard runs as non-root by default (no need to add USER)
 
 EXPOSE 3004
 
-# Start app
-CMD ["src/index.js"]
+CMD ["node", "src/index.js"]
