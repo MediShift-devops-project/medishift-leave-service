@@ -1,23 +1,28 @@
+# -------- Stage 1: Build --------
 FROM node:20-alpine AS builder
+
 WORKDIR /app
+
+# Install dependencies (deterministic)
 COPY package*.json ./
-RUN npm install
+RUN npm ci
+
+# Copy source
 COPY . .
 
-FROM node:20-alpine
-
-RUN addgroup -S appgroup && \
-    adduser -S appuser -G appgroup
+# -------- Stage 2: Minimal Runtime --------
+FROM gcr.io/distroless/nodejs20-debian12
 
 WORKDIR /app
 
-COPY --chown=appuser:appgroup package*.json ./
-RUN npm install --only=production && \
-    npm cache clean --force
+# Copy only required files from builder
+COPY --from=builder /app /app
 
-COPY --chown=appuser:appgroup --from=builder /app/src ./src
+# Use non-root user (distroless already provides one)
+USER nonroot
 
-USER appuser
 ENV NODE_ENV=production
+
 EXPOSE 3004
-CMD ["node", "src/index.js"]
+
+CMD ["src/index.js"]
